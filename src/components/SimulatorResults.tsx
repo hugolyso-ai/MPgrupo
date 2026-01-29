@@ -65,8 +65,7 @@ const SimulatorResults = ({ open, onOpenChange, simulacao, onReset }: SimulatorR
   };
 
   const calcularCustoAtual = (): number => {
-    const valorPotenciaDiaria = 0;
-    const custoPotencia = valorPotenciaDiaria * simulacao.dias_fatura;
+    const custoPotencia = simulacao.valor_potencia_diaria_atual * simulacao.dias_fatura;
 
     let custoEnergia = 0;
 

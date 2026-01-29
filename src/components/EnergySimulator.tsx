@@ -16,6 +16,7 @@ const EnergySimulator = ({ open, onOpenChange }: EnergySimulatorProps) => {
   const [formData, setFormData] = useState<SimulacaoInput>({
     operadora_atual: '',
     potencia: 6.9,
+    valor_potencia_diaria_atual: 0,
     dias_fatura: 30,
     ciclo_horario: 'simples',
     kwh_simples: 0,
@@ -55,6 +56,7 @@ const EnergySimulator = ({ open, onOpenChange }: EnergySimulatorProps) => {
     setFormData({
       operadora_atual: '',
       potencia: 6.9,
+      valor_potencia_diaria_atual: 0,
       dias_fatura: 30,
       ciclo_horario: 'simples',
       kwh_simples: 0,
@@ -125,19 +127,41 @@ const EnergySimulator = ({ open, onOpenChange }: EnergySimulatorProps) => {
             </div>
           </div>
 
-          <div>
-            <label className="flex items-center gap-2 font-body text-sm text-cream-muted mb-2">
-              <Calendar className="w-4 h-4 text-gold" />
-              Dias da Fatura *
-            </label>
-            <input
-              type="number"
-              min="1"
-              max="365"
-              value={formData.dias_fatura}
-              onChange={(e) => updateField('dias_fatura', parseInt(e.target.value) || 30)}
-              className="w-full px-4 py-3 bg-muted border border-border rounded-lg font-body text-foreground focus:outline-none focus:ring-2 focus:ring-gold/50"
-            />
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="flex items-center gap-2 font-body text-sm text-cream-muted mb-2">
+                <Zap className="w-4 h-4 text-gold" />
+                Valor Potência Diária Atual (€/dia) *
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.valor_potencia_diaria_atual}
+                onChange={(e) => updateField('valor_potencia_diaria_atual', parseFloat(e.target.value) || 0)}
+                required
+                placeholder="Ex: 0.3569"
+                className="w-full px-4 py-3 bg-muted border border-border rounded-lg font-body text-foreground focus:outline-none focus:ring-2 focus:ring-gold/50"
+              />
+              <p className="font-body text-xs text-cream-muted mt-1">
+                Encontra este valor na sua fatura atual
+              </p>
+            </div>
+
+            <div>
+              <label className="flex items-center gap-2 font-body text-sm text-cream-muted mb-2">
+                <Calendar className="w-4 h-4 text-gold" />
+                Dias da Fatura *
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="365"
+                value={formData.dias_fatura}
+                onChange={(e) => updateField('dias_fatura', parseInt(e.target.value) || 30)}
+                className="w-full px-4 py-3 bg-muted border border-border rounded-lg font-body text-foreground focus:outline-none focus:ring-2 focus:ring-gold/50"
+              />
+            </div>
           </div>
 
           <div>

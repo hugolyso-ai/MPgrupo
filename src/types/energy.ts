@@ -29,6 +29,7 @@ export type CicloHorario = 'simples' | 'bi-horario' | 'tri-horario';
 export interface SimulacaoInput {
   operadora_atual: string;
   potencia: number;
+  valor_potencia_diaria_atual: number;
   dias_fatura: number;
   ciclo_horario: CicloHorario;
   kwh_simples?: number;
