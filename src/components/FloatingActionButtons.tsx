@@ -12,13 +12,13 @@ const FloatingActionButtons = ({ onSimulatorClick }: FloatingActionButtonsProps)
   const socialLinks = [
     {
       icon: Linkedin,
-      href: 'https://www.linkedin.com/company/mpgrupo',
+      href: 'https://www.linkedin.com/company/mp-grupo',
       label: 'LinkedIn',
       color: 'from-[#0077B5] to-[#00A0DC]'
     },
     {
       icon: Facebook,
-      href: 'https://facebook.com/mpgrupo',
+      href: 'https://www.facebook.com/profile.php?id=61571823613093',
       label: 'Facebook',
       color: 'from-[#1877F2] to-[#4267B2]'
     },
