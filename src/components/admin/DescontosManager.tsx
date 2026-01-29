@@ -1,0 +1,236 @@
+import { useState, useEffect } from 'react';
+import { Loader2, Save } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { Operadora, ConfiguracaoDesconto } from '@/types/energy';
+import { toast } from 'sonner';
+
+const DescontosManager = () => {
+  const [operadoras, setOperadoras] = useState<Operadora[]>([]);
+  const [descontos, setDescontos] = useState<Record<string, ConfiguracaoDesconto>>({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const [operadorasRes, descontosRes] = await Promise.all([
+        supabase.from('operadoras').select('*').eq('ativa', true).order('nome'),
+        supabase.from('configuracoes_descontos').select('*')
+      ]);
+
+      if (operadorasRes.error) throw operadorasRes.error;
+      if (descontosRes.error) throw descontosRes.error;
+
+      setOperadoras(operadorasRes.data || []);
+
+      const descontosMap: Record<string, ConfiguracaoDesconto> = {};
+      (descontosRes.data || []).forEach((d) => {
+        descontosMap[d.operadora_id] = d;
+      });
+      setDescontos(descontosMap);
+    } catch (error) {
+      toast.error('Erro ao carregar dados');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async (operadoraId: string) => {
+    setSaving(operadoraId);
+
+    try {
+      const desconto = descontos[operadoraId];
+
+      if (desconto?.id) {
+        const { error } = await supabase
+          .from('configuracoes_descontos')
+          .update({
+            desconto_dd_potencia: desconto.desconto_dd_potencia,
+            desconto_dd_energia: desconto.desconto_dd_energia,
+            desconto_fe_potencia: desconto.desconto_fe_potencia,
+            desconto_fe_energia: desconto.desconto_fe_energia,
+          })
+          .eq('id', desconto.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('configuracoes_descontos')
+          .insert([{
+            operadora_id: operadoraId,
+            desconto_dd_potencia: desconto?.desconto_dd_potencia || 0,
+            desconto_dd_energia: desconto?.desconto_dd_energia || 0,
+            desconto_fe_potencia: desconto?.desconto_fe_potencia || 0,
+            desconto_fe_energia: desconto?.desconto_fe_energia || 0,
+          }]);
+
+        if (error) throw error;
+      }
+
+      toast.success('Descontos guardados com sucesso');
+      loadData();
+    } catch (error) {
+      toast.error('Erro ao guardar descontos');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const updateDesconto = (operadoraId: string, field: keyof ConfiguracaoDesconto, value: number) => {
+    setDescontos((prev) => ({
+      ...prev,
+      [operadoraId]: {
+        ...(prev[operadoraId] || {
+          id: '',
+          operadora_id: operadoraId,
+          desconto_dd_potencia: 0,
+          desconto_dd_energia: 0,
+          desconto_fe_potencia: 0,
+          desconto_fe_energia: 0,
+          created_at: '',
+          updated_at: '',
+        }),
+        [field]: value,
+      },
+    }));
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 text-gold animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h2 className="font-display text-2xl text-foreground mb-2">Configuração de Descontos</h2>
+        <p className="font-body text-sm text-cream-muted">
+          Configure os descontos aplicáveis a cada operadora para Débito Direto (DD) e Fatura Eletrónica (FE).
+        </p>
+      </div>
+
+      <div className="space-y-6">
+        {operadoras.map((operadora) => {
+          const desconto = descontos[operadora.id] || {
+            desconto_dd_potencia: 0,
+            desconto_dd_energia: 0,
+            desconto_fe_potencia: 0,
+            desconto_fe_energia: 0,
+          };
+
+          return (
+            <div key={operadora.id} className="p-6 bg-muted rounded-lg border border-border">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  {operadora.logotipo_url && (
+                    <img
+                      src={operadora.logotipo_url}
+                      alt={operadora.nome}
+                      className="w-24 h-12 object-contain bg-white rounded p-1"
+                    />
+                  )}
+                  <h3 className="font-body font-medium text-foreground text-lg">
+                    {operadora.nome}
+                  </h3>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h4 className="font-body font-medium text-foreground text-sm">
+                    Débito Direto (DD)
+                  </h4>
+                  <div>
+                    <label className="font-body text-xs text-cream-muted mb-2 block">
+                      % Desconto no Termo de Potência
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={desconto.desconto_dd_potencia}
+                      onChange={(e) => updateDesconto(operadora.id, 'desconto_dd_potencia', parseFloat(e.target.value) || 0)}
+                      className="w-full px-4 py-2 bg-background border border-border rounded-lg font-body text-foreground focus:outline-none focus:ring-2 focus:ring-gold/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-body text-xs text-cream-muted mb-2 block">
+                      % Desconto no Termo de Energia
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={desconto.desconto_dd_energia}
+                      onChange={(e) => updateDesconto(operadora.id, 'desconto_dd_energia', parseFloat(e.target.value) || 0)}
+                      className="w-full px-4 py-2 bg-background border border-border rounded-lg font-body text-foreground focus:outline-none focus:ring-2 focus:ring-gold/50"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="font-body font-medium text-foreground text-sm">
+                    Fatura Eletrónica (FE)
+                  </h4>
+                  <div>
+                    <label className="font-body text-xs text-cream-muted mb-2 block">
+                      % Desconto no Termo de Potência
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={desconto.desconto_fe_potencia}
+                      onChange={(e) => updateDesconto(operadora.id, 'desconto_fe_potencia', parseFloat(e.target.value) || 0)}
+                      className="w-full px-4 py-2 bg-background border border-border rounded-lg font-body text-foreground focus:outline-none focus:ring-2 focus:ring-gold/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-body text-xs text-cream-muted mb-2 block">
+                      % Desconto no Termo de Energia
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={desconto.desconto_fe_energia}
+                      onChange={(e) => updateDesconto(operadora.id, 'desconto_fe_energia', parseFloat(e.target.value) || 0)}
+                      className="w-full px-4 py-2 bg-background border border-border rounded-lg font-body text-foreground focus:outline-none focus:ring-2 focus:ring-gold/50"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end mt-4">
+                <button
+                  onClick={() => handleSave(operadora.id)}
+                  disabled={saving === operadora.id}
+                  className="flex items-center gap-2 px-6 py-2 bg-gold text-primary-foreground rounded-lg font-body hover:bg-gold-light transition-all disabled:opacity-50"
+                >
+                  {saving === operadora.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  Guardar
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+export default DescontosManager;

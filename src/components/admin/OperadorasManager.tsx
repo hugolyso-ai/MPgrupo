@@ -1,0 +1,361 @@
+import { useState, useEffect } from 'react';
+import { Plus, Edit, Trash2, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { Operadora, POTENCIAS_DISPONIVEIS } from '@/types/energy';
+import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+
+const OperadorasManager = () => {
+  const [operadoras, setOperadoras] = useState<Operadora[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showDialog, setShowDialog] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [formData, setFormData] = useState({
+    nome: '',
+    logotipo_url: '',
+    valor_kwh_simples: 0,
+    valor_kwh_vazio: 0,
+    valor_kwh_fora_vazio: 0,
+    valor_kwh_ponta: 0,
+    valor_kwh_cheias: 0,
+    ativa: true,
+  });
+
+  const [potencias, setPotencias] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    loadOperadoras();
+  }, []);
+
+  const loadOperadoras = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('operadoras')
+        .select('*')
+        .order('nome');
+
+      if (error) throw error;
+      setOperadoras(data || []);
+    } catch (error) {
+      toast.error('Erro ao carregar operadoras');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openDialog = (operadora?: Operadora) => {
+    if (operadora) {
+      setEditingId(operadora.id);
+      setFormData({
+        nome: operadora.nome,
+        logotipo_url: operadora.logotipo_url || '',
+        valor_kwh_simples: operadora.valor_kwh_simples,
+        valor_kwh_vazio: operadora.valor_kwh_vazio,
+        valor_kwh_fora_vazio: operadora.valor_kwh_fora_vazio,
+        valor_kwh_ponta: operadora.valor_kwh_ponta,
+        valor_kwh_cheias: operadora.valor_kwh_cheias,
+        ativa: operadora.ativa,
+      });
+      setPotencias(operadora.valor_diario_potencias as Record<string, number>);
+    } else {
+      setEditingId(null);
+      setFormData({
+        nome: '',
+        logotipo_url: '',
+        valor_kwh_simples: 0,
+        valor_kwh_vazio: 0,
+        valor_kwh_fora_vazio: 0,
+        valor_kwh_ponta: 0,
+        valor_kwh_cheias: 0,
+        ativa: true,
+      });
+      setPotencias({});
+    }
+    setShowDialog(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      const dataToSubmit = {
+        ...formData,
+        valor_diario_potencias: potencias,
+      };
+
+      if (editingId) {
+        const { error } = await supabase
+          .from('operadoras')
+          .update(dataToSubmit)
+          .eq('id', editingId);
+
+        if (error) throw error;
+        toast.success('Operadora atualizada com sucesso');
+      } else {
+        const { error } = await supabase
+          .from('operadoras')
+          .insert([dataToSubmit]);
+
+        if (error) throw error;
+        toast.success('Operadora criada com sucesso');
+      }
+
+      setShowDialog(false);
+      loadOperadoras();
+    } catch (error) {
+      toast.error('Erro ao guardar operadora');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Tem a certeza que deseja eliminar esta operadora?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('operadoras')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success('Operadora eliminada');
+      loadOperadoras();
+    } catch (error) {
+      toast.error('Erro ao eliminar operadora');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 text-gold animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="font-display text-2xl text-foreground">Gestão de Operadoras</h2>
+        <button
+          onClick={() => openDialog()}
+          className="flex items-center gap-2 px-4 py-2 bg-gold text-primary-foreground rounded-lg font-body hover:bg-gold-light transition-all"
+        >
+          <Plus className="w-5 h-5" />
+          Nova Operadora
+        </button>
+      </div>
+
+      <div className="grid gap-4">
+        {operadoras.map((operadora) => (
+          <div key={operadora.id} className="p-4 bg-muted rounded-lg border border-border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                {operadora.logotipo_url ? (
+                  <img
+                    src={operadora.logotipo_url}
+                    alt={operadora.nome}
+                    className="w-24 h-12 object-contain bg-white rounded p-1"
+                  />
+                ) : (
+                  <div className="w-24 h-12 bg-muted-foreground/10 rounded flex items-center justify-center">
+                    <ImageIcon className="w-6 h-6 text-muted-foreground" />
+                  </div>
+                )}
+                <div>
+                  <h3 className="font-body font-medium text-foreground">{operadora.nome}</h3>
+                  <p className="text-sm text-cream-muted">
+                    {operadora.ativa ? 'Ativa' : 'Inativa'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => openDialog(operadora)}
+                  className="p-2 text-gold hover:bg-gold/10 rounded-lg transition-all"
+                >
+                  <Edit className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => handleDelete(operadora.id)}
+                  className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-all"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">
+              {editingId ? 'Editar Operadora' : 'Nova Operadora'}
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="font-body text-sm text-cream-muted mb-2 block">
+                  Nome *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.nome}
+                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                  className="w-full px-4 py-2 bg-muted border border-border rounded-lg font-body text-foreground focus:outline-none focus:ring-2 focus:ring-gold/50"
+                />
+              </div>
+
+              <div>
+                <label className="font-body text-sm text-cream-muted mb-2 block">
+                  URL do Logótipo
+                </label>
+                <input
+                  type="url"
+                  value={formData.logotipo_url}
+                  onChange={(e) => setFormData({ ...formData, logotipo_url: e.target.value })}
+                  className="w-full px-4 py-2 bg-muted border border-border rounded-lg font-body text-foreground focus:outline-none focus:ring-2 focus:ring-gold/50"
+                  placeholder="https://exemplo.com/logo.png"
+                />
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-body font-medium text-foreground mb-3">Tarifas kWh (€/kWh)</h3>
+              <div className="grid md:grid-cols-3 gap-4">
+                <div>
+                  <label className="font-body text-sm text-cream-muted mb-2 block">
+                    Simples
+                  </label>
+                  <input
+                    type="number"
+                    step="0.000001"
+                    value={formData.valor_kwh_simples}
+                    onChange={(e) => setFormData({ ...formData, valor_kwh_simples: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-4 py-2 bg-muted border border-border rounded-lg font-body text-foreground focus:outline-none focus:ring-2 focus:ring-gold/50"
+                  />
+                </div>
+                <div>
+                  <label className="font-body text-sm text-cream-muted mb-2 block">
+                    Vazio
+                  </label>
+                  <input
+                    type="number"
+                    step="0.000001"
+                    value={formData.valor_kwh_vazio}
+                    onChange={(e) => setFormData({ ...formData, valor_kwh_vazio: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-4 py-2 bg-muted border border-border rounded-lg font-body text-foreground focus:outline-none focus:ring-2 focus:ring-gold/50"
+                  />
+                </div>
+                <div>
+                  <label className="font-body text-sm text-cream-muted mb-2 block">
+                    Fora de Vazio
+                  </label>
+                  <input
+                    type="number"
+                    step="0.000001"
+                    value={formData.valor_kwh_fora_vazio}
+                    onChange={(e) => setFormData({ ...formData, valor_kwh_fora_vazio: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-4 py-2 bg-muted border border-border rounded-lg font-body text-foreground focus:outline-none focus:ring-2 focus:ring-gold/50"
+                  />
+                </div>
+                <div>
+                  <label className="font-body text-sm text-cream-muted mb-2 block">
+                    Ponta
+                  </label>
+                  <input
+                    type="number"
+                    step="0.000001"
+                    value={formData.valor_kwh_ponta}
+                    onChange={(e) => setFormData({ ...formData, valor_kwh_ponta: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-4 py-2 bg-muted border border-border rounded-lg font-body text-foreground focus:outline-none focus:ring-2 focus:ring-gold/50"
+                  />
+                </div>
+                <div>
+                  <label className="font-body text-sm text-cream-muted mb-2 block">
+                    Cheias
+                  </label>
+                  <input
+                    type="number"
+                    step="0.000001"
+                    value={formData.valor_kwh_cheias}
+                    onChange={(e) => setFormData({ ...formData, valor_kwh_cheias: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-4 py-2 bg-muted border border-border rounded-lg font-body text-foreground focus:outline-none focus:ring-2 focus:ring-gold/50"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-body font-medium text-foreground mb-3">
+                Valor Diário por Potência (€/dia)
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-h-64 overflow-y-auto p-2 bg-muted/50 rounded-lg">
+                {POTENCIAS_DISPONIVEIS.map((potencia) => (
+                  <div key={potencia}>
+                    <label className="font-body text-xs text-cream-muted mb-1 block">
+                      {potencia} kVA
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={potencias[potencia.toString()] || ''}
+                      onChange={(e) => setPotencias({
+                        ...potencias,
+                        [potencia.toString()]: parseFloat(e.target.value) || 0
+                      })}
+                      className="w-full px-3 py-1.5 text-sm bg-background border border-border rounded font-body text-foreground focus:outline-none focus:ring-1 focus:ring-gold/50"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="ativa"
+                checked={formData.ativa}
+                onChange={(e) => setFormData({ ...formData, ativa: e.target.checked })}
+                className="w-4 h-4"
+              />
+              <label htmlFor="ativa" className="font-body text-sm text-cream-muted cursor-pointer">
+                Operadora ativa
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setShowDialog(false)}
+                disabled={submitting}
+                className="px-6 py-2 border border-border rounded-lg font-body text-cream-muted hover:text-foreground transition-all disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-6 py-2 bg-gold text-primary-foreground rounded-lg font-body hover:bg-gold-light transition-all disabled:opacity-50 flex items-center gap-2"
+              >
+                {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                {editingId ? 'Atualizar' : 'Criar'}
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default OperadorasManager;
