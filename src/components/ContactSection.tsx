@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Phone, Mail, MapPin, Clock } from "lucide-react";
+import { Phone, Mail, MapPin } from "lucide-react";
 
 const contactInfo = [
   {
@@ -11,20 +11,14 @@ const contactInfo = [
   {
     icon: Phone,
     title: "Telefone",
-    content: "+351 912 345 678",
-    link: "tel:+351912345678",
+    content: "+351 928 203 793",
+    link: "tel:+351928203793",
   },
   {
     icon: Mail,
     title: "Email",
     content: "info@mpgrupo.pt",
     link: "mailto:info@mpgrupo.pt",
-  },
-  {
-    icon: Clock,
-    title: "Horário",
-    content: "Seg-Sex: 9h-18h",
-    link: null,
   },
 ];
 
@@ -62,7 +56,7 @@ const ContactSection = () => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="grid md:grid-cols-2 gap-6"
+            className="grid md:grid-cols-3 gap-6"
           >
             {contactInfo.map((info, index) => (
               <motion.div

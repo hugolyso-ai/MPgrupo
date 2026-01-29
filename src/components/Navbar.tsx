@@ -32,7 +32,7 @@ const Navbar = () => {
       >
         <nav className="container mx-auto px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
-            {/* Logo */}
+            {/* Logo Left */}
             <a href="#" className="font-display text-2xl gold-text font-medium">
               MPgrupo
             </a>
@@ -55,6 +55,13 @@ const Navbar = () => {
               >
                 Fale Connosco
               </a>
+
+              {/* Logo Right */}
+              <img
+                src="/src/assets/mpgrupo_semfundo.png"
+                alt="MPgrupo Logo"
+                className="h-12 w-auto"
+              />
             </div>
 
             {/* Mobile Menu Button */}

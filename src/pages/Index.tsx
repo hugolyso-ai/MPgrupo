@@ -9,6 +9,7 @@ import ContactSection from "@/components/ContactSection";
 import ContactForm from "@/components/ContactForm";
 import Footer from "@/components/Footer";
 import FloatingSocialButtons from "@/components/FloatingSocialButtons";
+import CookieConsent from "@/components/CookieConsent";
 
 const Index = () => {
   return (
@@ -24,6 +25,7 @@ const Index = () => {
       <ContactForm />
       <Footer />
       <FloatingSocialButtons />
+      <CookieConsent />
     </div>
   );
 };

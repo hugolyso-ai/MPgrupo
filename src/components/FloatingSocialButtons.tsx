@@ -1,10 +1,16 @@
 import { motion } from "framer-motion";
-import { Linkedin, Instagram, Facebook } from "lucide-react";
+import { Linkedin, Instagram, Facebook, MessageCircle } from "lucide-react";
 
 const socialLinks = [
-  { icon: Linkedin, href: "#", label: "LinkedIn" },
-  { icon: Instagram, href: "#", label: "Instagram" },
-  { icon: Facebook, href: "#", label: "Facebook" },
+  {
+    icon: MessageCircle,
+    href: "https://wa.me/351928203793?text=Olá%2C%20gostaria%20de%20mais%20informações",
+    label: "WhatsApp",
+    isWhatsApp: true
+  },
+  { icon: Linkedin, href: "#", label: "LinkedIn", isWhatsApp: false },
+  { icon: Instagram, href: "#", label: "Instagram", isWhatsApp: false },
+  { icon: Facebook, href: "#", label: "Facebook", isWhatsApp: false },
 ];
 
 const FloatingSocialButtons = () => {
@@ -19,11 +25,17 @@ const FloatingSocialButtons = () => {
         <motion.a
           key={social.label}
           href={social.href}
+          target="_blank"
+          rel="noopener noreferrer"
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.4, delay: 1.2 + index * 0.1 }}
           whileHover={{ scale: 1.1, x: -5 }}
-          className="w-12 h-12 rounded-full bg-chocolate/90 backdrop-blur-sm border border-gold/20 flex items-center justify-center text-gold hover:bg-gold hover:text-primary-foreground transition-all duration-300 shadow-lg"
+          className={`w-12 h-12 rounded-full backdrop-blur-sm border flex items-center justify-center transition-all duration-300 shadow-lg ${
+            social.isWhatsApp
+              ? "bg-[#25D366]/90 border-[#25D366]/30 text-white hover:bg-[#25D366]"
+              : "bg-chocolate/90 border-gold/20 text-gold hover:bg-gold hover:text-primary-foreground"
+          }`}
           aria-label={social.label}
         >
           <social.icon className="w-5 h-5" strokeWidth={1.5} />
