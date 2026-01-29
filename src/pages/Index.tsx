@@ -9,9 +9,9 @@ import PartnershipsSection from "@/components/PartnershipsSection";
 import ContactSection from "@/components/ContactSection";
 import ContactForm from "@/components/ContactForm";
 import Footer from "@/components/Footer";
-import FloatingSocialButtons from "@/components/FloatingSocialButtons";
 import CookieConsent from "@/components/CookieConsent";
-import SimulatorButton from "@/components/SimulatorButton";
+import FloatingActionButtons from "@/components/FloatingActionButtons";
+import SimulatorCTA from "@/components/SimulatorCTA";
 import EnergySimulator from "@/components/EnergySimulator";
 
 const Index = () => {
@@ -22,16 +22,18 @@ const Index = () => {
       <Navbar />
       <Hero />
       <AboutSection />
+      <SimulatorCTA onClick={() => setSimulatorOpen(true)} variant="compact" />
       <ServicesSection />
+      <SimulatorCTA onClick={() => setSimulatorOpen(true)} />
       <PhilosophySection />
+      <SimulatorCTA onClick={() => setSimulatorOpen(true)} variant="compact" />
       <CareersSection />
       <PartnershipsSection />
       <ContactSection />
       <ContactForm />
       <Footer />
-      <FloatingSocialButtons />
+      <FloatingActionButtons onSimulatorClick={() => setSimulatorOpen(true)} />
       <CookieConsent />
-      <SimulatorButton onClick={() => setSimulatorOpen(true)} />
       <EnergySimulator open={simulatorOpen} onOpenChange={setSimulatorOpen} />
     </div>
   );
