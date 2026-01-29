@@ -164,7 +164,7 @@ export const generateSimulationPDF = (data: PDFData): void => {
       doc.text(`Poupança: €${resultado.poupanca.toFixed(2)}`, col2X, yPosition + 17);
     } else if (resultado.poupanca < 0) {
       doc.setTextColor(...redColor);
-      doc.text(`Sem poupança: €${Math.abs(resultado.poupanca).toFixed(2)}`, col2X, yPosition + 17);
+      doc.text(`Custo adicional: €${Math.abs(resultado.poupanca).toFixed(2)}`, col2X, yPosition + 17);
     } else {
       doc.setTextColor(...textColor);
       doc.text(`Igual ao atual`, col2X, yPosition + 17);
@@ -187,7 +187,8 @@ export const generateSimulationPDF = (data: PDFData): void => {
 
   const melhorOpcao = data.resultados[0];
   if (melhorOpcao && melhorOpcao.poupanca > 0) {
-    const poupancaAnual = melhorOpcao.poupanca * 12;
+    const poupancaMensal = (melhorOpcao.poupanca / data.simulacao.dias_fatura) * 30;
+    const poupancaAnual = poupancaMensal * 12;
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
@@ -347,7 +348,7 @@ export const generateSimulationPDF = (data: PDFData): void => {
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.text('MPGrupo - Soluções Energéticas', margin, pageHeight - 15);
-    doc.text('www.mpgrupo.pt | contacto@mpgrupo.pt', margin, pageHeight - 10);
+    doc.text('+351 928 203 793 | info@mpgrupo.pt | www.mpgrupo.pt', margin, pageHeight - 10);
 
     doc.setFontSize(8);
     doc.text(`Gerado em ${data.dataGeracao.toLocaleString('pt-PT')}`, pageWidth - margin, pageHeight - 10, { align: 'right' });

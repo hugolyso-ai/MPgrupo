@@ -56,7 +56,7 @@ const SimulatorResults = ({ open, onOpenChange, simulacao, onReset }: SimulatorR
         if (operadora.nome.toLowerCase().trim() === simulacao.operadora_atual.toLowerCase().trim()) continue;
 
         const desconto = descontosMap[operadora.id];
-        const resultado = calcularCustoOperadora(operadora, desconto);
+        const resultado = calcularCustoOperadora(operadora, desconto, custoAtual);
         if (resultado) {
           resultadosCalculados.push(resultado);
         }
@@ -95,7 +95,8 @@ const SimulatorResults = ({ open, onOpenChange, simulacao, onReset }: SimulatorR
 
   const calcularCustoOperadora = (
     operadora: Operadora,
-    desconto?: ConfiguracaoDesconto
+    desconto: ConfiguracaoDesconto | undefined,
+    custoAtualFatura: number
   ): ResultadoComparacao | null => {
     const tarifasCiclo = operadora.tarifas?.[simulacao.ciclo_horario];
     if (!tarifasCiclo) return null;
@@ -151,7 +152,7 @@ const SimulatorResults = ({ open, onOpenChange, simulacao, onReset }: SimulatorR
     }
 
     const subtotal = custoPotencia + custoEnergia;
-    const poupanca = custoAtual - subtotal;
+    const poupanca = custoAtualFatura - subtotal;
 
     let poupancaPotencialDDFE: number | undefined;
     if (desconto && (!simulacao.debito_direto || !simulacao.fatura_eletronica)) {
@@ -235,6 +236,23 @@ const SimulatorResults = ({ open, onOpenChange, simulacao, onReset }: SimulatorR
     }).format(value);
   };
 
+  const getCellStyle = (resultado: ResultadoComparacao, melhorResultado: ResultadoComparacao | undefined) => {
+    const isBestWithSavings = resultado === melhorResultado && resultado.poupanca > 0;
+    return isBestWithSavings ? { boxShadow: '0 0 15px rgba(34, 197, 94, 0.4)' } : undefined;
+  };
+
+  const getCellClassName = (resultado: ResultadoComparacao, melhorResultado: ResultadoComparacao | undefined, baseClass: string = '') => {
+    const isBestWithSavings = resultado === melhorResultado && resultado.poupanca > 0;
+    const isBest = resultado === melhorResultado;
+
+    if (isBestWithSavings) {
+      return `${baseClass} bg-green-50 dark:bg-green-900/20 border-green-500/50`;
+    } else if (isBest) {
+      return `${baseClass} bg-gold/10 border-border`;
+    }
+    return `${baseClass} border-border`;
+  };
+
   const handleExportPDF = () => {
     try {
       generateSimulationPDF({
@@ -288,7 +306,13 @@ const SimulatorResults = ({ open, onOpenChange, simulacao, onReset }: SimulatorR
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={`max-w-[95vw] max-h-[90vh] overflow-y-auto ${temPoupanca ? 'ring-4 ring-green-500/50 shadow-[0_0_30px_rgba(34,197,94,0.3)]' : ''}`}>
+      <DialogContent
+        className="max-w-[95vw] max-h-[90vh] overflow-y-auto"
+        style={temPoupanca ? {
+          boxShadow: '0 0 0 4px rgba(34, 197, 94, 0.5), 0 0 30px rgba(34, 197, 94, 0.3)',
+          border: '2px solid rgba(34, 197, 94, 0.5)'
+        } : undefined}
+      >
         <DialogHeader>
           <DialogTitle className="font-display text-3xl text-center mb-2">
             Resultados da <span className="gold-text">Simulação</span>
@@ -403,29 +427,35 @@ const SimulatorResults = ({ open, onOpenChange, simulacao, onReset }: SimulatorR
                     Operadora Atual<br/>
                     <span className="text-xs font-normal text-cream-muted">{simulacao.operadora_atual}</span>
                   </th>
-                  {resultados.map((r) => (
-                    <th
-                      key={r.operadora.id}
-                      className={`p-3 text-center font-body font-medium text-foreground border ${
-                        r === melhorResultado && r.poupanca > 0
-                          ? 'bg-green-100 dark:bg-green-900/30 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.4)]'
-                          : r === melhorResultado
-                          ? 'bg-gold/20 border-border'
-                          : 'border-border'
-                      }`}
-                    >
-                      <div className="flex flex-col items-center gap-2">
-                        {r.operadora.logotipo_url && (
-                          <img
-                            src={r.operadora.logotipo_url}
-                            alt={r.operadora.nome}
-                            className="w-20 h-10 object-contain bg-white rounded p-1"
-                          />
-                        )}
-                        <span className="text-xs">{r.operadora.nome}</span>
-                      </div>
-                    </th>
-                  ))}
+                  {resultados.map((r) => {
+                    const isBestWithSavings = r === melhorResultado && r.poupanca > 0;
+                    return (
+                      <th
+                        key={r.operadora.id}
+                        className={`p-3 text-center font-body font-medium text-foreground border ${
+                          isBestWithSavings
+                            ? 'bg-green-100 dark:bg-green-900/30 border-green-500'
+                            : r === melhorResultado
+                            ? 'bg-gold/20 border-border'
+                            : 'border-border'
+                        }`}
+                        style={isBestWithSavings ? {
+                          boxShadow: '0 0 15px rgba(34, 197, 94, 0.4)'
+                        } : undefined}
+                      >
+                        <div className="flex flex-col items-center gap-2">
+                          {r.operadora.logotipo_url && (
+                            <img
+                              src={r.operadora.logotipo_url}
+                              alt={r.operadora.nome}
+                              className="w-20 h-10 object-contain bg-white rounded p-1"
+                            />
+                          )}
+                          <span className="text-xs">{r.operadora.nome}</span>
+                        </div>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody>
@@ -445,13 +475,8 @@ const SimulatorResults = ({ open, onOpenChange, simulacao, onReset }: SimulatorR
                   {resultados.map((r) => (
                     <td
                       key={r.operadora.id}
-                      className={`p-3 text-center font-body text-foreground border ${
-                        r === melhorResultado && r.poupanca > 0
-                          ? 'bg-green-50 dark:bg-green-900/20 border-green-500/50'
-                          : r === melhorResultado
-                          ? 'bg-gold/10 border-border'
-                          : 'border-border'
-                      }`}
+                      className={getCellClassName(r, melhorResultado, 'p-3 text-center font-body text-foreground border')}
+                      style={getCellStyle(r, melhorResultado)}
                     >
                       {formatCurrency(r.valor_potencia_diaria, 6)}
                     </td>
@@ -467,13 +492,8 @@ const SimulatorResults = ({ open, onOpenChange, simulacao, onReset }: SimulatorR
                   {resultados.map((r) => (
                     <td
                       key={r.operadora.id}
-                      className={`p-3 text-center font-body font-medium text-foreground border ${
-                        r === melhorResultado && r.poupanca > 0
-                          ? 'bg-green-50 dark:bg-green-900/20 border-green-500/50'
-                          : r === melhorResultado
-                          ? 'bg-gold/10 border-border'
-                          : 'border-border'
-                      }`}
+                      className={getCellClassName(r, melhorResultado, 'p-3 text-center font-body font-medium text-foreground border')}
+                      style={getCellStyle(r, melhorResultado)}
                     >
                       {formatCurrency(r.custo_total_potencia, 2)}
                     </td>
@@ -779,22 +799,33 @@ const SimulatorResults = ({ open, onOpenChange, simulacao, onReset }: SimulatorR
                   <td className="p-3 text-center font-body text-foreground border border-border">
                     -
                   </td>
-                  {resultados.map((r) => (
-                    <td
-                      key={r.operadora.id}
-                      className={`p-3 text-center font-body font-bold text-lg border ${
-                        r === melhorResultado && r.poupanca > 0
-                          ? 'bg-green-100 dark:bg-green-900/30 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.3)] text-green-700 dark:text-green-400'
-                          : r === melhorResultado
-                          ? 'bg-gold/30 text-gold border-border'
-                          : r.poupanca > 0
-                          ? 'text-green-600 border-border'
-                          : 'text-red-600 border-border'
-                      }`}
-                    >
-                      {formatCurrency(r.poupanca, 2)}
-                    </td>
-                  ))}
+                  {resultados.map((r) => {
+                    const isBestWithSavings = r === melhorResultado && r.poupanca > 0;
+                    const isBest = r === melhorResultado;
+
+                    let className = 'p-3 text-center font-body font-bold text-lg border ';
+                    if (isBestWithSavings) {
+                      className += 'bg-green-100 dark:bg-green-900/30 border-green-500 text-green-700 dark:text-green-400';
+                    } else if (isBest) {
+                      className += 'bg-gold/30 text-gold border-border';
+                    } else if (r.poupanca > 0) {
+                      className += 'text-green-600 border-border';
+                    } else {
+                      className += 'text-red-600 border-border';
+                    }
+
+                    return (
+                      <td
+                        key={r.operadora.id}
+                        className={className}
+                        style={isBestWithSavings ? {
+                          boxShadow: '0 0 20px rgba(34, 197, 94, 0.5)'
+                        } : undefined}
+                      >
+                        {formatCurrency(r.poupanca, 2)}
+                      </td>
+                    );
+                  })}
                 </tr>
               </tbody>
             </table>
