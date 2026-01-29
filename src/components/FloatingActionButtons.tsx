@@ -24,7 +24,7 @@ const FloatingActionButtons = ({ onSimulatorClick }: FloatingActionButtonsProps)
     },
     {
       icon: Phone,
-      href: 'https://wa.me/351910000000',
+      href: 'https://wa.me/351928203793?text=Olá%2C%20gostaria%20de%20mais%20informações',
       label: 'WhatsApp',
       color: 'from-[#25D366] to-[#128C7E]'
     }

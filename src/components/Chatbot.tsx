@@ -140,7 +140,7 @@ const faqs: FAQ[] = [
   {
     category: 'Contacto',
     question: 'Como vos posso contactar?',
-    answer: 'Várias formas de contacto:\n\n📱 WhatsApp: [número]\n📧 Email: contacto@mpgrupo.pt\n📞 Telefone: [número]\n📝 Formulário no site\n\nRespondemos rapidamente! Horário: 2ª-6ª 9h-18h',
+    answer: 'Várias formas de contacto:\n\n📱 WhatsApp: 928 203 793\n📧 Email: contacto@mpgrupo.pt\n📞 Telefone: 928 203 793\n📝 Formulário no site\n\nRespondemos rapidamente! Horário: 2ª-6ª 9h-18h',
     keywords: ['contacto', 'contato', 'falar', 'telefone', 'email', 'whatsapp', 'contactar'],
   },
 ];
@@ -209,7 +209,7 @@ ${categoriesList}
 
 Pode perguntar sobre qualquer um destes tópicos ou contactar-nos diretamente:
 
-📱 WhatsApp/Tel: [número]
+📱 WhatsApp/Tel: 928 203 793
 📧 Email: contacto@mpgrupo.pt
 📝 Formulário no site`;
   };

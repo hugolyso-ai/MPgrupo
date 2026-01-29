@@ -37,4 +37,4 @@ export const openWhatsApp = (phoneNumber: string, message: string): void => {
   window.open(url, '_blank');
 };
 
-export const MPGRUPO_WHATSAPP = '351912345678';
+export const MPGRUPO_WHATSAPP = '351928203793';
