@@ -8,9 +8,9 @@ const socialLinks = [
     label: "WhatsApp",
     isWhatsApp: true
   },
-  { icon: Linkedin, href: "#", label: "LinkedIn", isWhatsApp: false },
+  { icon: Linkedin, href: "https://www.linkedin.com/company/mp-grupo/", label: "LinkedIn", isWhatsApp: false },
   { icon: Instagram, href: "#", label: "Instagram", isWhatsApp: false },
-  { icon: Facebook, href: "#", label: "Facebook", isWhatsApp: false },
+  { icon: Facebook, href: "https://www.facebook.com/share/182iwjQwkP/", label: "Facebook", isWhatsApp: false },
 ];
 
 const FloatingSocialButtons = () => {
