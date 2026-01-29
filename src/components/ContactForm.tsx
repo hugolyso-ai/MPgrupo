@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { ChevronRight, ChevronLeft, Send, User, Phone, Mail, MessageSquare, CheckCircle2 } from "lucide-react";
+import { ChevronRight, ChevronLeft, Send, User, Phone, Mail, MessageSquare, CheckCircle2, Upload, X, FileText } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -36,6 +36,8 @@ const ContactForm = ({ simulationData }: ContactFormProps = {}) => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string>("");
   const [formData, setFormData] = useState<Partial<FormData>>({
     name: "",
     email: "",
@@ -51,6 +53,44 @@ const ContactForm = ({ simulationData }: ContactFormProps = {}) => {
   const updateField = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setFileError("");
+
+    if (file) {
+      const maxSize = 5 * 1024 * 1024;
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+
+      if (file.size > maxSize) {
+        setFileError("O arquivo deve ter no máximo 5MB");
+        setUploadedFile(null);
+        return;
+      }
+
+      if (!allowedTypes.includes(file.type)) {
+        setFileError("Apenas PDF e imagens (JPG, PNG) são permitidos");
+        setUploadedFile(null);
+        return;
+      }
+
+      setUploadedFile(file);
+    }
+  };
+
+  const removeFile = () => {
+    setUploadedFile(null);
+    setFileError("");
+  };
+
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
   };
 
   const validateStep = (currentStep: number): boolean => {
@@ -96,7 +136,17 @@ const ContactForm = ({ simulationData }: ContactFormProps = {}) => {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from('pedidos_contacto').insert({
+      let fileData = null;
+      if (uploadedFile) {
+        const base64 = await convertFileToBase64(uploadedFile);
+        fileData = {
+          filename: uploadedFile.name,
+          content: base64.split(',')[1],
+          contentType: uploadedFile.type,
+        };
+      }
+
+      const { error: dbError } = await supabase.from('pedidos_contacto').insert({
         nome: formData.name,
         email: formData.email,
         telefone: formData.phone,
@@ -108,9 +158,41 @@ const ContactForm = ({ simulationData }: ContactFormProps = {}) => {
         mensagem: `Assunto: ${formData.subject}\n\n${formData.message || ''}`,
         origem: simulationData ? 'simulador' : 'web',
         estado: 'novo',
+        anexo_nome: uploadedFile?.name || null,
       });
 
-      if (error) throw error;
+      if (dbError) throw dbError;
+
+      const emailData = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        subject: formData.subject,
+        message: formData.message || '',
+        attachment: fileData,
+        simulationData: simulationData ? {
+          operadora_atual: simulationData.operadora_atual,
+          operadora_interesse: simulationData.operadora_interesse,
+          potencia: simulationData.potencia,
+          poupanca_estimada: simulationData.poupanca_estimada,
+        } : null,
+      };
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-contact-email`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify(emailData),
+        }
+      );
+
+      if (!response.ok) {
+        console.error('Email sending failed:', await response.text());
+      }
 
       setIsSubmitted(true);
       toast.success('Pedido de contacto enviado com sucesso!');
@@ -367,6 +449,62 @@ const ContactForm = ({ simulationData }: ContactFormProps = {}) => {
                         className="w-full px-4 py-3 bg-muted border border-border rounded-lg font-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gold/50 transition-all resize-none"
                         placeholder="Descreva brevemente o que procura..."
                       />
+                    </div>
+
+                    <div>
+                      <label className="flex items-center gap-2 font-body text-sm text-cream-muted mb-2">
+                        <Upload className="w-4 h-4 text-gold" strokeWidth={1.5} />
+                        Anexar Fatura (opcional)
+                      </label>
+
+                      {!uploadedFile ? (
+                        <label className="block w-full cursor-pointer">
+                          <div className="w-full px-4 py-6 bg-muted border-2 border-dashed border-border rounded-lg hover:border-gold/50 transition-all">
+                            <div className="flex flex-col items-center gap-2 text-center">
+                              <Upload className="w-8 h-8 text-gold" />
+                              <p className="font-body text-sm text-foreground">
+                                Clique para selecionar um arquivo
+                              </p>
+                              <p className="font-body text-xs text-cream-muted">
+                                PDF, JPG ou PNG (máx. 5MB)
+                              </p>
+                            </div>
+                          </div>
+                          <input
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            onChange={handleFileUpload}
+                            className="hidden"
+                          />
+                        </label>
+                      ) : (
+                        <div className="w-full px-4 py-4 bg-muted border border-gold/50 rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <FileText className="w-6 h-6 text-gold" />
+                              <div>
+                                <p className="font-body text-sm text-foreground font-medium">
+                                  {uploadedFile.name}
+                                </p>
+                                <p className="font-body text-xs text-cream-muted">
+                                  {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={removeFile}
+                              className="p-2 hover:bg-destructive/10 rounded-lg transition-all"
+                            >
+                              <X className="w-5 h-5 text-destructive" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {fileError && (
+                        <p className="text-destructive text-sm mt-2">{fileError}</p>
+                      )}
                     </div>
 
                     {/* Summary */}
