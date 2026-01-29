@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Phone, Zap, Users, Award, TrendingUp, Shield } from "lucide-react";
+import { Phone, Zap, Sun, Award, TrendingUp, Shield } from "lucide-react";
 
 const services = [
   {
@@ -11,17 +11,17 @@ const services = [
   },
   {
     icon: Zap,
-    title: "Energia Geral",
+    title: "Energia",
     description: "Otimize os seus custos energéticos. Comparamos tarifas e encontramos a melhor solução para o seu perfil de consumo.",
     stat: "30%",
     statLabel: "poupança média",
   },
   {
-    icon: Users,
-    title: "Vendas D2D",
-    description: "Líderes em vendas porta-a-porta em Portugal. Uma equipa dedicada e metodologia comprovada.",
-    stat: "500+",
-    statLabel: "profissionais",
+    icon: Sun,
+    title: "Energia Solar",
+    description: "Soluções fotovoltaicas personalizadas para residências e empresas. Reduza a fatura e aumente o valor do seu imóvel.",
+    stat: "25 anos",
+    statLabel: "de garantia",
   },
 ];
 

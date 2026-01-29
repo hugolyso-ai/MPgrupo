@@ -7,7 +7,7 @@ const formSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").max(100),
   email: z.string().email("Email inválido").max(255),
   phone: z.string().min(9, "Telefone deve ter pelo menos 9 dígitos").max(20),
-  subject: z.enum(["Parceria", "Candidatura Espontânea", "Orçamento Solar Personalizado"]),
+  subject: z.enum(["Parceria", "Candidatura Espontânea", "Análise da minha fatura"]),
   message: z.string().max(1000).optional(),
 });
 
@@ -16,7 +16,7 @@ type FormData = z.infer<typeof formSchema>;
 const subjects = [
   { value: "Parceria", label: "Parceria Comercial", icon: "🤝" },
   { value: "Candidatura Espontânea", label: "Candidatura Espontânea", icon: "💼" },
-  { value: "Orçamento Solar Personalizado", label: "Orçamento Solar", icon: "☀️" },
+  { value: "Análise da minha fatura", label: "Análise da Minha Fatura", icon: "📊" },
 ] as const;
 
 const ContactForm = () => {
