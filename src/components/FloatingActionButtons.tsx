@@ -115,7 +115,7 @@ const FloatingActionButtons = ({ onSimulatorClick }: FloatingActionButtonsProps)
         </motion.button>
       </div>
 
-      <div className="md:hidden fixed bottom-6 right-4 z-50">
+      <div className="md:hidden fixed bottom-6 left-4 z-50">
         <AnimatePresence>
           {isExpanded && (
             <motion.div
@@ -123,7 +123,7 @@ const FloatingActionButtons = ({ onSimulatorClick }: FloatingActionButtonsProps)
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="absolute bottom-full right-0 mb-3 flex flex-col gap-2"
+              className="absolute bottom-full left-0 mb-3 flex flex-col gap-2"
             >
               {socialLinks.map((social, index) => (
                 <motion.a
