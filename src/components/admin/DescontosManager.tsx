@@ -56,6 +56,9 @@ const DescontosManager = () => {
             desconto_fe_energia: desconto.desconto_fe_energia,
             desconto_dd_fe_potencia: desconto.desconto_dd_fe_potencia,
             desconto_dd_fe_energia: desconto.desconto_dd_fe_energia,
+            desconto_mensal_temporario: desconto.desconto_mensal_temporario,
+            duracao_meses_desconto: desconto.duracao_meses_desconto,
+            descricao_desconto_temporario: desconto.descricao_desconto_temporario,
           })
           .eq('id', desconto.id);
 
@@ -73,6 +76,9 @@ const DescontosManager = () => {
             desconto_fe_energia: desconto?.desconto_fe_energia || 0,
             desconto_dd_fe_potencia: desconto?.desconto_dd_fe_potencia || 0,
             desconto_dd_fe_energia: desconto?.desconto_dd_fe_energia || 0,
+            desconto_mensal_temporario: desconto?.desconto_mensal_temporario || 0,
+            duracao_meses_desconto: desconto?.duracao_meses_desconto || 0,
+            descricao_desconto_temporario: desconto?.descricao_desconto_temporario || null,
           }]);
 
         if (error) throw error;
@@ -87,7 +93,7 @@ const DescontosManager = () => {
     }
   };
 
-  const updateDesconto = (operadoraId: string, field: keyof ConfiguracaoDesconto, value: number) => {
+  const updateDesconto = (operadoraId: string, field: keyof ConfiguracaoDesconto, value: number | string | null) => {
     setDescontos((prev) => ({
       ...prev,
       [operadoraId]: {
@@ -102,6 +108,9 @@ const DescontosManager = () => {
           desconto_fe_energia: 0,
           desconto_dd_fe_potencia: 0,
           desconto_dd_fe_energia: 0,
+          desconto_mensal_temporario: 0,
+          duracao_meses_desconto: 0,
+          descricao_desconto_temporario: null,
           created_at: '',
           updated_at: '',
         }),
@@ -156,6 +165,9 @@ const DescontosManager = () => {
             desconto_fe_energia: 0,
             desconto_dd_fe_potencia: 0,
             desconto_dd_fe_energia: 0,
+            desconto_mensal_temporario: 0,
+            duracao_meses_desconto: 0,
+            descricao_desconto_temporario: null,
           };
 
           return (
@@ -311,6 +323,60 @@ const DescontosManager = () => {
                     />
                   </div>
                 </div>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-border">
+                <h4 className="font-body font-medium text-foreground text-base mb-4">
+                  Desconto Temporário Mensal (Promocional)
+                </h4>
+                <div className="grid md:grid-cols-3 gap-4 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                  <div>
+                    <label className="font-body text-xs text-cream-muted mb-2 block">
+                      Valor do Desconto Mensal (€)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={desconto.desconto_mensal_temporario}
+                      onChange={(e) => updateDesconto(operadora.id, 'desconto_mensal_temporario', parseFloat(e.target.value) || 0)}
+                      className="w-full px-4 py-2 bg-background border border-border rounded-lg font-body text-foreground focus:outline-none focus:ring-2 focus:ring-gold/50"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-body text-xs text-cream-muted mb-2 block">
+                      Duração (meses)
+                    </label>
+                    <input
+                      type="number"
+                      step="1"
+                      min="0"
+                      value={desconto.duracao_meses_desconto}
+                      onChange={(e) => updateDesconto(operadora.id, 'duracao_meses_desconto', parseInt(e.target.value) || 0)}
+                      className="w-full px-4 py-2 bg-background border border-border rounded-lg font-body text-foreground focus:outline-none focus:ring-2 focus:ring-gold/50"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-body text-xs text-cream-muted mb-2 block">
+                      Descrição da Campanha (opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={desconto.descricao_desconto_temporario || ''}
+                      onChange={(e) => updateDesconto(operadora.id, 'descricao_desconto_temporario', e.target.value || null)}
+                      className="w-full px-4 py-2 bg-background border border-border rounded-lg font-body text-foreground focus:outline-none focus:ring-2 focus:ring-gold/50"
+                      placeholder="Ex: Campanha de Primavera"
+                    />
+                  </div>
+                </div>
+                {desconto.desconto_mensal_temporario > 0 && desconto.duracao_meses_desconto > 0 && (
+                  <p className="mt-3 text-sm font-body text-amber-700 dark:text-amber-400">
+                    Desconto de {desconto.desconto_mensal_temporario.toFixed(2)}€/mês durante {desconto.duracao_meses_desconto} {desconto.duracao_meses_desconto === 1 ? 'mês' : 'meses'}
+                    = {(desconto.desconto_mensal_temporario * desconto.duracao_meses_desconto).toFixed(2)}€ de poupança total no período promocional
+                  </p>
+                )}
               </div>
 
               <div className="flex justify-end mt-6 pt-4 border-t border-border">

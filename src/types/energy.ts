@@ -52,6 +52,9 @@ export interface ConfiguracaoDesconto {
   desconto_fe_energia: number;
   desconto_dd_fe_potencia: number;
   desconto_dd_fe_energia: number;
+  desconto_mensal_temporario: number;
+  duracao_meses_desconto: number;
+  descricao_desconto_temporario: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -91,6 +94,14 @@ export interface ResultadoComparacao {
   subtotal: number;
   poupanca: number;
   poupanca_potencial_dd_fe?: number;
+  desconto_temporario?: {
+    valor_mensal: number;
+    duracao_meses: number;
+    descricao: string | null;
+    poupanca_periodo_desconto: number;
+    custo_mensal_com_desconto: number;
+    custo_mensal_apos_desconto: number;
+  };
 }
 
 export const POTENCIAS_DISPONIVEIS = [

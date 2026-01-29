@@ -127,18 +127,23 @@ const SimulatorResults = ({ open, onOpenChange, simulacao, onReset }: SimulatorR
       custosEnergia.cheias = custoCheias;
     }
 
-    if (desconto && (simulacao.debito_direto || simulacao.fatura_eletronica)) {
-      let descontoPotencia = 0;
-      let descontoEnergia = 0;
+    if (desconto) {
+      let descontoPotencia = desconto.desconto_base_potencia || 0;
+      let descontoEnergia = desconto.desconto_base_energia || 0;
 
-      if (simulacao.debito_direto) {
-        descontoPotencia += desconto.desconto_dd_potencia;
-        descontoEnergia += desconto.desconto_dd_energia;
-      }
+      if (simulacao.debito_direto && simulacao.fatura_eletronica) {
+        descontoPotencia += desconto.desconto_dd_fe_potencia || 0;
+        descontoEnergia += desconto.desconto_dd_fe_energia || 0;
+      } else {
+        if (simulacao.debito_direto) {
+          descontoPotencia += desconto.desconto_dd_potencia || 0;
+          descontoEnergia += desconto.desconto_dd_energia || 0;
+        }
 
-      if (simulacao.fatura_eletronica) {
-        descontoPotencia += desconto.desconto_fe_potencia;
-        descontoEnergia += desconto.desconto_fe_energia;
+        if (simulacao.fatura_eletronica) {
+          descontoPotencia += desconto.desconto_fe_potencia || 0;
+          descontoEnergia += desconto.desconto_fe_energia || 0;
+        }
       }
 
       custoPotencia = custoPotencia * (1 - descontoPotencia / 100);
@@ -174,6 +179,22 @@ const SimulatorResults = ({ open, onOpenChange, simulacao, onReset }: SimulatorR
       poupancaPotencialDDFE = subtotal - subtotalComDesconto;
     }
 
+    let descontoTemporario: ResultadoComparacao['desconto_temporario'];
+    if (desconto && desconto.desconto_mensal_temporario > 0 && desconto.duracao_meses_desconto > 0) {
+      const custoMensalBase = (subtotal / simulacao.dias_fatura) * 30;
+      const custoMensalComDesconto = custoMensalBase - desconto.desconto_mensal_temporario;
+      const poupancaPeriodoDesconto = desconto.desconto_mensal_temporario * desconto.duracao_meses_desconto;
+
+      descontoTemporario = {
+        valor_mensal: desconto.desconto_mensal_temporario,
+        duracao_meses: desconto.duracao_meses_desconto,
+        descricao: desconto.descricao_desconto_temporario,
+        poupanca_periodo_desconto: poupancaPeriodoDesconto,
+        custo_mensal_com_desconto: custoMensalComDesconto,
+        custo_mensal_apos_desconto: custoMensalBase,
+      };
+    }
+
     return {
       operadora,
       valor_potencia_diaria: valorPotenciaDiaria,
@@ -183,6 +204,7 @@ const SimulatorResults = ({ open, onOpenChange, simulacao, onReset }: SimulatorR
       subtotal,
       poupanca,
       poupanca_potencial_dd_fe: poupancaPotencialDDFE,
+      desconto_temporario: descontoTemporario,
     };
   };
 
@@ -480,6 +502,73 @@ const SimulatorResults = ({ open, onOpenChange, simulacao, onReset }: SimulatorR
                     </p>
                   ))}
               </div>
+            </div>
+          )}
+
+          {resultados.some((r) => r.desconto_temporario) && (
+            <div className="space-y-4">
+              {resultados
+                .filter((r) => r.desconto_temporario)
+                .map((r) => {
+                  const dt = r.desconto_temporario!;
+                  return (
+                    <div key={r.operadora.id} className="p-6 bg-amber-500/10 border-2 border-amber-500/50 rounded-lg">
+                      <div className="flex items-start gap-3 mb-4">
+                        <AlertCircle className="w-6 h-6 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <h4 className="font-body font-bold text-foreground text-lg mb-1">
+                            {r.operadora.nome} - Desconto Promocional Temporário
+                          </h4>
+                          {dt.descricao && (
+                            <p className="font-body text-sm text-amber-600 dark:text-amber-400 mb-2">
+                              {dt.descricao}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid md:grid-cols-3 gap-4 mb-4">
+                        <div className="p-4 bg-background rounded-lg border border-amber-500/30">
+                          <p className="font-body text-xs text-cream-muted mb-1">Desconto Mensal</p>
+                          <p className="font-body font-bold text-foreground text-xl">
+                            {formatCurrency(dt.valor_mensal)}
+                          </p>
+                        </div>
+                        <div className="p-4 bg-background rounded-lg border border-amber-500/30">
+                          <p className="font-body text-xs text-cream-muted mb-1">Durante</p>
+                          <p className="font-body font-bold text-foreground text-xl">
+                            {dt.duracao_meses} {dt.duracao_meses === 1 ? 'mês' : 'meses'}
+                          </p>
+                        </div>
+                        <div className="p-4 bg-amber-500/20 rounded-lg border border-amber-500/50">
+                          <p className="font-body text-xs text-amber-700 dark:text-amber-400 mb-1">Poupança Total no Período</p>
+                          <p className="font-body font-bold text-amber-700 dark:text-amber-400 text-xl">
+                            {formatCurrency(dt.poupanca_periodo_desconto)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-background rounded-lg border border-border space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="font-body text-sm text-cream-muted">
+                            Custo Mensal durante os primeiros {dt.duracao_meses} {dt.duracao_meses === 1 ? 'mês' : 'meses'}:
+                          </span>
+                          <span className="font-body font-bold text-green-600 text-lg">
+                            {formatCurrency(dt.custo_mensal_com_desconto)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="font-body text-sm text-cream-muted">
+                            Custo Mensal após o período promocional:
+                          </span>
+                          <span className="font-body font-bold text-foreground text-lg">
+                            {formatCurrency(dt.custo_mensal_apos_desconto)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           )}
 
