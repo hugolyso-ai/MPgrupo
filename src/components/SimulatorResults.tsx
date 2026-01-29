@@ -208,6 +208,11 @@ const SimulatorResults = ({ open, onOpenChange, simulacao, onReset }: SimulatorR
     openWhatsApp(MPGRUPO_WHATSAPP, message);
   };
 
+  const handleAdesaoWhatsApp = () => {
+    const message = encodeURIComponent('Gostei da simulação que fiz e pretendo avançar com adesão!');
+    openWhatsApp(MPGRUPO_WHATSAPP, message);
+  };
+
   if (loading) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -436,6 +441,14 @@ const SimulatorResults = ({ open, onOpenChange, simulacao, onReset }: SimulatorR
               >
                 <Download className="w-5 h-5" />
                 Exportar PDF
+              </button>
+              <button
+                type="button"
+                onClick={handleAdesaoWhatsApp}
+                className="flex items-center gap-2 px-6 py-3 bg-green-500 text-white rounded-lg font-body font-medium hover:bg-green-600 transition-all shadow-lg hover:shadow-xl"
+              >
+                <MessageCircle className="w-5 h-5" />
+                Quero aderir!
               </button>
               <button
                 type="button"
