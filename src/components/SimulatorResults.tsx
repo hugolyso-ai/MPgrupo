@@ -181,6 +181,14 @@ const SimulatorResults = ({ open, onOpenChange, simulacao, onReset }: SimulatorR
 
     let descontoTemporario: ResultadoComparacao['desconto_temporario'];
     if (desconto && desconto.desconto_mensal_temporario > 0 && desconto.duracao_meses_desconto > 0) {
+      const requerDD = desconto.desconto_temp_requer_dd || false;
+      const requerFE = desconto.desconto_temp_requer_fe || false;
+
+      const clienteTemDD = simulacao.debito_direto;
+      const clienteTemFE = simulacao.fatura_eletronica;
+
+      const disponivel = (!requerDD || clienteTemDD) && (!requerFE || clienteTemFE);
+
       const custoMensalBase = (subtotal / simulacao.dias_fatura) * 30;
       const custoMensalComDesconto = custoMensalBase - desconto.desconto_mensal_temporario;
       const poupancaPeriodoDesconto = desconto.desconto_mensal_temporario * desconto.duracao_meses_desconto;
@@ -192,6 +200,9 @@ const SimulatorResults = ({ open, onOpenChange, simulacao, onReset }: SimulatorR
         poupanca_periodo_desconto: poupancaPeriodoDesconto,
         custo_mensal_com_desconto: custoMensalComDesconto,
         custo_mensal_apos_desconto: custoMensalBase,
+        requer_dd: requerDD,
+        requer_fe: requerFE,
+        disponivel: disponivel,
       };
     }
 
@@ -505,10 +516,10 @@ const SimulatorResults = ({ open, onOpenChange, simulacao, onReset }: SimulatorR
             </div>
           )}
 
-          {resultados.some((r) => r.desconto_temporario) && (
+          {resultados.some((r) => r.desconto_temporario && r.desconto_temporario.disponivel) && (
             <div className="space-y-4">
               {resultados
-                .filter((r) => r.desconto_temporario)
+                .filter((r) => r.desconto_temporario && r.desconto_temporario.disponivel)
                 .map((r) => {
                   const dt = r.desconto_temporario!;
                   return (
@@ -569,6 +580,35 @@ const SimulatorResults = ({ open, onOpenChange, simulacao, onReset }: SimulatorR
                     </div>
                   );
                 })}
+            </div>
+          )}
+
+          {resultados.some((r) => r.desconto_temporario && !r.desconto_temporario.disponivel) && (
+            <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+              <div className="space-y-2">
+                <p className="font-body font-medium text-foreground">
+                  Descontos Promocionais Adicionais Disponíveis
+                </p>
+                {resultados
+                  .filter((r) => r.desconto_temporario && !r.desconto_temporario.disponivel)
+                  .map((r) => {
+                    const dt = r.desconto_temporario!;
+                    const requisitos: string[] = [];
+                    if (dt.requer_dd && !simulacao.debito_direto) requisitos.push('Débito Direto');
+                    if (dt.requer_fe && !simulacao.fatura_eletronica) requisitos.push('Fatura Eletrónica');
+
+                    return (
+                      <p key={r.operadora.id} className="font-body text-sm text-cream-muted">
+                        <strong>{r.operadora.nome}:</strong> Poupança adicional de{' '}
+                        <strong className="text-blue-500">{formatCurrency(dt.poupanca_periodo_desconto)}</strong>{' '}
+                        durante {dt.duracao_meses} {dt.duracao_meses === 1 ? 'mês' : 'meses'}{' '}
+                        se aderir a {requisitos.join(' e ')}
+                        {dt.descricao && ` (${dt.descricao})`}
+                      </p>
+                    );
+                  })}
+              </div>
             </div>
           )}
 

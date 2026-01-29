@@ -59,6 +59,8 @@ const DescontosManager = () => {
             desconto_mensal_temporario: desconto.desconto_mensal_temporario,
             duracao_meses_desconto: desconto.duracao_meses_desconto,
             descricao_desconto_temporario: desconto.descricao_desconto_temporario,
+            desconto_temp_requer_dd: desconto.desconto_temp_requer_dd,
+            desconto_temp_requer_fe: desconto.desconto_temp_requer_fe,
           })
           .eq('id', desconto.id);
 
@@ -79,6 +81,8 @@ const DescontosManager = () => {
             desconto_mensal_temporario: desconto?.desconto_mensal_temporario || 0,
             duracao_meses_desconto: desconto?.duracao_meses_desconto || 0,
             descricao_desconto_temporario: desconto?.descricao_desconto_temporario || null,
+            desconto_temp_requer_dd: desconto?.desconto_temp_requer_dd || false,
+            desconto_temp_requer_fe: desconto?.desconto_temp_requer_fe || false,
           }]);
 
         if (error) throw error;
@@ -93,7 +97,7 @@ const DescontosManager = () => {
     }
   };
 
-  const updateDesconto = (operadoraId: string, field: keyof ConfiguracaoDesconto, value: number | string | null) => {
+  const updateDesconto = (operadoraId: string, field: keyof ConfiguracaoDesconto, value: number | string | null | boolean) => {
     setDescontos((prev) => ({
       ...prev,
       [operadoraId]: {
@@ -111,6 +115,8 @@ const DescontosManager = () => {
           desconto_mensal_temporario: 0,
           duracao_meses_desconto: 0,
           descricao_desconto_temporario: null,
+          desconto_temp_requer_dd: false,
+          desconto_temp_requer_fe: false,
           created_at: '',
           updated_at: '',
         }),
@@ -168,6 +174,8 @@ const DescontosManager = () => {
             desconto_mensal_temporario: 0,
             duracao_meses_desconto: 0,
             descricao_desconto_temporario: null,
+            desconto_temp_requer_dd: false,
+            desconto_temp_requer_fe: false,
           };
 
           return (
@@ -371,6 +379,50 @@ const DescontosManager = () => {
                     />
                   </div>
                 </div>
+
+                <div className="mt-4 p-4 bg-background rounded-lg border border-border">
+                  <p className="font-body text-xs text-cream-muted mb-3">
+                    Condições de Acesso ao Desconto Temporário:
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={desconto.desconto_temp_requer_dd}
+                        onChange={(e) => updateDesconto(operadora.id, 'desconto_temp_requer_dd', e.target.checked)}
+                        className="w-4 h-4 rounded border-border text-gold focus:ring-gold focus:ring-offset-0"
+                      />
+                      <span className="font-body text-sm text-foreground">
+                        Requer Débito Direto
+                      </span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={desconto.desconto_temp_requer_fe}
+                        onChange={(e) => updateDesconto(operadora.id, 'desconto_temp_requer_fe', e.target.checked)}
+                        className="w-4 h-4 rounded border-border text-gold focus:ring-gold focus:ring-offset-0"
+                      />
+                      <span className="font-body text-sm text-foreground">
+                        Requer Fatura Eletrónica
+                      </span>
+                    </label>
+                  </div>
+                  {!desconto.desconto_temp_requer_dd && !desconto.desconto_temp_requer_fe && (
+                    <p className="mt-2 text-xs font-body text-green-600 dark:text-green-400">
+                      Desconto disponível para todos os clientes (sem condições)
+                    </p>
+                  )}
+                  {(desconto.desconto_temp_requer_dd || desconto.desconto_temp_requer_fe) && (
+                    <p className="mt-2 text-xs font-body text-amber-600 dark:text-amber-400">
+                      Desconto disponível apenas com:{' '}
+                      {desconto.desconto_temp_requer_dd && desconto.desconto_temp_requer_fe && 'Débito Direto + Fatura Eletrónica'}
+                      {desconto.desconto_temp_requer_dd && !desconto.desconto_temp_requer_fe && 'Débito Direto'}
+                      {!desconto.desconto_temp_requer_dd && desconto.desconto_temp_requer_fe && 'Fatura Eletrónica'}
+                    </p>
+                  )}
+                </div>
+
                 {desconto.desconto_mensal_temporario > 0 && desconto.duracao_meses_desconto > 0 && (
                   <p className="mt-3 text-sm font-body text-amber-700 dark:text-amber-400">
                     Desconto de {desconto.desconto_mensal_temporario.toFixed(2)}€/mês durante {desconto.duracao_meses_desconto} {desconto.duracao_meses_desconto === 1 ? 'mês' : 'meses'}

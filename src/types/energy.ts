@@ -55,6 +55,8 @@ export interface ConfiguracaoDesconto {
   desconto_mensal_temporario: number;
   duracao_meses_desconto: number;
   descricao_desconto_temporario: string | null;
+  desconto_temp_requer_dd: boolean;
+  desconto_temp_requer_fe: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -101,6 +103,9 @@ export interface ResultadoComparacao {
     poupanca_periodo_desconto: number;
     custo_mensal_com_desconto: number;
     custo_mensal_apos_desconto: number;
+    requer_dd: boolean;
+    requer_fe: boolean;
+    disponivel: boolean;
   };
 }
 
